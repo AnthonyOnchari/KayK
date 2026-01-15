@@ -93,6 +93,12 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            cursor: pointer;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
         }
         
         /* Warning Message */
@@ -256,6 +262,11 @@
             background: var(--light);
             color: var(--dark);
             border: 2px solid #E5E7EB;
+        }
+        
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 0.9rem;
         }
         
         .btn:disabled {
@@ -456,7 +467,33 @@
             left: 0;
         }
         
-        /* Result Modal */
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+        
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -497,30 +534,18 @@
             line-height: 1.6;
         }
         
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin: 30px 0;
+        .auth-form input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-family: 'Inter', sans-serif;
         }
         
-        .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            color: rgba(255,255,255,0.7);
-            font-size: 0.9rem;
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--primary);
         }
         
         /* Responsive */
@@ -552,6 +577,10 @@
             .amount-options {
                 grid-template-columns: 1fr;
             }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -567,9 +596,23 @@
                 </div>
             </div>
             <div class="points-container">
-                <div class="points-badge">
-                    <i class="fas fa-wallet"></i>
-                    <span id="userPoints">0</span> Points
+                <!-- Auth Buttons (shown when not logged in) -->
+                <div id="authButtons" class="auth-buttons">
+                    <button id="loginButton" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                    <button id="registerButton" class="btn btn-primary btn-sm">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
+                </div>
+                
+                <!-- Profile Section (shown when logged in) -->
+                <div id="profileSection" style="display: none;">
+                    <div class="points-badge" id="profileBadge">
+                        <i class="fas fa-user"></i>
+                        <span id="userName">User</span>
+                        • <span id="displayPoints">0</span> Points
+                    </div>
                 </div>
             </div>
         </div>
@@ -618,7 +661,7 @@
                 <!-- Question -->
                 <div class="question-box">
                     <div class="question-text" id="questionText">
-                        Deposit points first to play! Click "Buy Points" on the right.
+                        Please login or register to play trivia and win money!
                     </div>
                     <div class="question-meta">
                         <span id="questionCategory">--</span>
@@ -635,7 +678,7 @@
                 <div class="game-controls">
                     <button id="playBtn" class="btn btn-primary" disabled>
                         <i class="fas fa-lock"></i>
-                        Need Points to Play
+                        Login to Play
                     </button>
                     <button id="submitBtn" class="btn btn-secondary" disabled>
                         <i class="fas fa-paper-plane"></i>
@@ -686,9 +729,9 @@
                 </div>
                 
                 <!-- Pay Button -->
-                <button id="payBtn" class="pay-btn">
-                    <i class="fas fa-paper-plane"></i>
-                    Pay via M-Pesa STK
+                <button id="payBtn" class="pay-btn" disabled>
+                    <i class="fas fa-user-lock"></i>
+                    Login to Deposit
                 </button>
                 
                 <!-- Payment Status -->
@@ -698,6 +741,7 @@
                 <div class="rules">
                     <h4><i class="fas fa-info-circle"></i> How It Works</h4>
                     <ul>
+                        <li>Create account or login first</li>
                         <li>Deposit points using M-Pesa</li>
                         <li>1 Point = 1 KSh value</li>
                         <li>Play trivia games (100 points per game)</li>
@@ -709,15 +753,165 @@
         </div>
     </div>
     
+    <!-- Login/Register Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-user" style="color: var(--primary);"></i>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2 class="modal-title">Welcome to KayKSH</h2>
+                <p class="modal-message">Sign in to play and win money</p>
+                
+                <div class="auth-form" style="margin: 25px 0;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: var(--dark); margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <input type="email" id="loginEmail" placeholder="your@email.com">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: var(--dark); margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" id="loginPassword" placeholder="********">
+                    </div>
+                    
+                    <button id="loginBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 15px;">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                    
+                    <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                        Don't have an account? <a href="#" id="showRegister" style="color: var(--primary); font-weight: 600;">Sign Up</a>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Register Form (hidden by default) -->
+            <div id="registerForm" style="display: none;">
+                <h2 class="modal-title">Create Account</h2>
+                <p class="modal-message">Join KayKSH to play trivia and win money</p>
+                
+                <div class="auth-form" style="margin: 25px 0;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: var(--dark); margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-user"></i> Full Name
+                        </label>
+                        <input type="text" id="registerName" placeholder="John Doe">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: var(--dark); margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <input type="email" id="registerEmail" placeholder="your@email.com">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: var(--dark); margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </label>
+                        <input type="tel" id="registerPhone" placeholder="07XXXXXXXXX">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: var(--dark); margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" id="registerPassword" placeholder="********">
+                    </div>
+                    
+                    <button id="registerBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 15px;">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                    
+                    <p style="text-align: center; color: #666;">
+                        Already have an account? <a href="#" id="showLogin" style="color: var(--primary); font-weight: 600;">Sign In</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-user-circle" style="color: var(--primary);"></i>
+            </div>
+            
+            <h2 class="modal-title" id="profileName">Loading...</h2>
+            <p class="modal-message" id="profileEmail">Loading...</p>
+            
+            <!-- Profile Stats -->
+            <div style="background: #F8F9FA; padding: 20px; border-radius: 15px; margin: 25px 0;">
+                <h3 style="color: var(--dark); margin-bottom: 20px; text-align: center;">Account Statistics</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);" id="profilePoints">0</div>
+                        <div style="color: #666; font-size: 0.9rem;">Points</div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--success);" id="profileGamesPlayed">0</div>
+                        <div style="color: #666; font-size: 0.9rem;">Games Played</div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--warning);" id="profileGamesWon">0</div>
+                        <div style="color: #666; font-size: 0.9rem;">Games Won</div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--secondary);" id="profileWinRate">0%</div>
+                        <div style="color: #666; font-size: 0.9rem;">Win Rate</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Details -->
+            <div style="margin: 25px 0;">
+                <h3 style="color: var(--dark); margin-bottom: 15px;">Account Details</h3>
+                
+                <div style="background: #F8F9FA; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                    <div style="color: #666; font-size: 0.9rem;">Phone Number</div>
+                    <div style="font-weight: 600; color: var(--dark);" id="profilePhone">Not set</div>
+                </div>
+                
+                <div style="background: #F8F9FA; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="color: #666; font-size: 0.9rem;">Account Created</div>
+                    <div style="font-weight: 600; color: var(--dark);" id="profileCreated">Loading...</div>
+                </div>
+                
+                <!-- Transaction History -->
+                <h3 style="color: var(--dark); margin-bottom: 15px;">Recent Transactions</h3>
+                <div style="max-height: 200px; overflow-y: auto;" id="transactionHistory">
+                    <!-- Transactions will be loaded here -->
+                </div>
+            </div>
+            
+            <button id="logoutBtn" class="btn btn-secondary" style="margin-right: 10px;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+            <button id="closeProfile" class="btn btn-primary">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+
     <!-- Result Modal -->
     <div class="modal" id="resultModal">
         <div class="modal-content">
             <div class="modal-icon" id="resultIcon">
                 <i class="fas fa-trophy" style="color: #FF9F1C;"></i>
             </div>
-            <h2 class="modal-title" id="resultTitle">You Need Points!</h2>
+            <h2 class="modal-title" id="resultTitle">Welcome to KayKSH!</h2>
             <p class="modal-message" id="resultMessage">
-                Deposit points first to play the trivia game.
+                Create an account or login to play trivia and win real money.
             </p>
             <button id="closeModal" class="btn btn-primary" style="width: 100%;">
                 <i class="fas fa-check"></i> OK
@@ -779,7 +973,7 @@
         // GAME STATE & CONFIGURATION
         // ==============================================
         let gameState = {
-            points: 0,  // Start with ZERO points
+            points: 0,
             isPlaying: false,
             currentQuestion: null,
             selectedAnswer: null,
@@ -791,19 +985,16 @@
             gamesPlayed: 0,
             gamesWon: 0,
             paymentInProgress: false,
-            paymentTimeout: null
+            paymentTimeout: null,
+            currentUser: null,
+            isAuthenticated: false,
+            users: []
         };
 
         // REAL PayHero API Configuration
         const PAYHERO_CONFIG = {
-            // Your PayHero STK Push API endpoint
             apiUrl: 'https://short.payhero.co.ke/s/34UsaC2LVdvkDjk5xz2tri',
-            
-            // For testing: Use this demo endpoint that simulates real payments
-            // In production, use your actual PayHero API
-            demoMode: true, // Set to false when using real API
-            
-            // Demo responses (simulate real M-Pesa)
+            demoMode: true,
             demoResponses: {
                 success: {
                     success: true,
@@ -896,20 +1087,59 @@
         // INITIALIZATION
         // ==============================================
         document.addEventListener('DOMContentLoaded', function() {
+            initializeAuth();
             initializeGame();
             setupEventListeners();
             updateUI();
         });
 
+        function initializeAuth() {
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('kayksh_currentUser');
+            if (savedUser) {
+                try {
+                    gameState.currentUser = JSON.parse(savedUser);
+                    gameState.isAuthenticated = true;
+                    gameState.points = gameState.currentUser.points || 0;
+                    gameState.gamesPlayed = gameState.currentUser.gamesPlayed || 0;
+                    gameState.gamesWon = gameState.currentUser.gamesWon || 0;
+                    
+                    // Update phone number in payment form
+                    if (gameState.currentUser.phone) {
+                        document.getElementById('phoneNumber').value = gameState.currentUser.phone;
+                        gameState.phoneNumber = gameState.currentUser.phone;
+                    }
+                    
+                    updateAuthUI();
+                    updatePlayButton();
+                    updatePayButton();
+                    
+                    // Hide warning if user has points
+                    if (gameState.currentUser.points >= 100) {
+                        document.querySelector('.warning-box').style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error('Error loading user data:', e);
+                    localStorage.removeItem('kayksh_currentUser');
+                }
+            }
+            
+            // Load all users from localStorage
+            const savedUsers = localStorage.getItem('kayksh_users');
+            if (savedUsers) {
+                try {
+                    gameState.users = JSON.parse(savedUsers);
+                } catch (e) {
+                    console.error('Error loading users:', e);
+                    gameState.users = [];
+                }
+            }
+        }
+
         function initializeGame() {
-            // Start with 0 points - User MUST deposit first
-            gameState.points = 0;
             updatePointsDisplay();
-            
-            // Disable play button until points are added
             updatePlayButton();
-            
-            // Setup amount selection
+            updatePayButton();
             setupAmountSelection();
         }
 
@@ -926,10 +1156,44 @@
             // Phone number input
             document.getElementById('phoneNumber').addEventListener('input', validatePhoneNumber);
             
-            // Modal buttons
+            // Auth Listeners
+            document.getElementById('loginButton').addEventListener('click', () => showAuthModal('login'));
+            document.getElementById('registerButton').addEventListener('click', () => showAuthModal('register'));
+            
+            // Profile Listeners
+            document.getElementById('profileBadge').addEventListener('click', showProfileModal);
+            
+            // Login Form
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('showRegister').addEventListener('click', (e) => {
+                e.preventDefault();
+                showAuthModal('register');
+            });
+            
+            // Register Form
+            document.getElementById('registerBtn').addEventListener('click', handleRegister);
+            document.getElementById('showLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                showAuthModal('login');
+            });
+            
+            // Profile Modal
+            document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+            document.getElementById('closeProfile').addEventListener('click', hideProfileModal);
+            
+            // Modals
             document.getElementById('closeModal').addEventListener('click', closeModal);
             document.getElementById('cancelPayment').addEventListener('click', cancelPayment);
             document.getElementById('checkPayment').addEventListener('click', checkPaymentStatus);
+            
+            // Close modals when clicking outside
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
             
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboardShortcuts);
@@ -948,15 +1212,355 @@
                     // Update game state
                     gameState.selectedAmount = parseInt(this.dataset.amount);
                     gameState.selectedPoints = parseInt(this.dataset.points);
-                    
-                    console.log(`Selected: KSh ${gameState.selectedAmount} for ${gameState.selectedPoints} points`);
                 });
             });
         }
 
         // ==============================================
-        // PAYMENT SYSTEM - REAL M-PESA STK PUSH
+        // USER AUTHENTICATION SYSTEM
         // ==============================================
+
+        function updateAuthUI() {
+            const authButtons = document.getElementById('authButtons');
+            const profileSection = document.getElementById('profileSection');
+            
+            if (gameState.isAuthenticated && gameState.currentUser) {
+                // Show profile section
+                authButtons.style.display = 'none';
+                profileSection.style.display = 'flex';
+                
+                // Update user info
+                document.getElementById('userName').textContent = 
+                    gameState.currentUser.name.split(' ')[0]; // First name only
+                document.getElementById('displayPoints').textContent = 
+                    gameState.currentUser.points.toLocaleString();
+                
+                // Update main points display
+                document.getElementById('userPoints').textContent = 
+                    gameState.currentUser.points.toLocaleString();
+                
+                // Update game state points
+                gameState.points = gameState.currentUser.points;
+                updatePlayButton();
+                updatePayButton();
+                
+                // Hide warning if user has points
+                if (gameState.currentUser.points >= 100) {
+                    document.querySelector('.warning-box').style.display = 'none';
+                } else {
+                    document.querySelector('.warning-box').style.display = 'flex';
+                }
+                
+                // Update question text
+                if (gameState.currentUser.points < 100) {
+                    document.getElementById('questionText').textContent = 
+                        'You need at least 100 points to play. Deposit points to continue!';
+                } else {
+                    document.getElementById('questionText').textContent = 
+                        'Ready to play! Click "Play Game" to start.';
+                }
+            } else {
+                // Show auth buttons
+                authButtons.style.display = 'flex';
+                profileSection.style.display = 'none';
+                
+                // Update question text
+                document.getElementById('questionText').textContent = 
+                    'Please login or register to play trivia and win money!';
+            }
+        }
+
+        function registerUser(name, email, phone, password) {
+            // Validate inputs
+            if (!name || !email || !phone || !password) {
+                return { success: false, message: 'All fields are required' };
+            }
+            
+            if (!validateEmail(email)) {
+                return { success: false, message: 'Invalid email address' };
+            }
+            
+            if (!phone.match(/^07[0-9]{8}$/)) {
+                return { success: false, message: 'Invalid phone number (07XXXXXXXXX)' };
+            }
+            
+            if (password.length < 6) {
+                return { success: false, message: 'Password must be at least 6 characters' };
+            }
+            
+            // Check if user already exists
+            const existingUser = gameState.users.find(user => user.email === email);
+            if (existingUser) {
+                return { success: false, message: 'Email already registered' };
+            }
+            
+            // Create new user
+            const newUser = {
+                id: Date.now().toString(),
+                name: name,
+                email: email,
+                phone: phone,
+                password: password,
+                points: 100, // Give 100 bonus points to start
+                gamesPlayed: 0,
+                gamesWon: 0,
+                totalWon: 0,
+                createdAt: new Date().toISOString(),
+                transactions: []
+            };
+            
+            // Add to users array
+            gameState.users.push(newUser);
+            
+            // Save to localStorage
+            localStorage.setItem('kayksh_users', JSON.stringify(gameState.users));
+            
+            // Auto login after registration
+            return loginUser(email, password);
+        }
+
+        function loginUser(email, password) {
+            // Find user
+            const user = gameState.users.find(u => u.email === email && u.password === password);
+            
+            if (!user) {
+                return { success: false, message: 'Invalid email or password' };
+            }
+            
+            // Set current user
+            gameState.currentUser = user;
+            gameState.isAuthenticated = true;
+            
+            // Update game state
+            gameState.points = user.points;
+            gameState.gamesPlayed = user.gamesPlayed;
+            gameState.gamesWon = user.gamesWon;
+            
+            // Update phone number
+            gameState.phoneNumber = user.phone;
+            document.getElementById('phoneNumber').value = user.phone;
+            
+            // Save to localStorage
+            localStorage.setItem('kayksh_currentUser', JSON.stringify(user));
+            
+            // Update UI
+            updateAuthUI();
+            updateUI();
+            
+            return { success: true, user: user };
+        }
+
+        function logoutUser() {
+            // Save user data before logout
+            saveUserData();
+            
+            // Clear current user
+            gameState.currentUser = null;
+            gameState.isAuthenticated = false;
+            gameState.points = 0;
+            gameState.gamesPlayed = 0;
+            gameState.gamesWon = 0;
+            gameState.phoneNumber = "";
+            
+            // Clear localStorage
+            localStorage.removeItem('kayksh_currentUser');
+            
+            // Clear phone input
+            document.getElementById('phoneNumber').value = "";
+            
+            // Update UI
+            updateAuthUI();
+            updateUI();
+            updatePlayButton();
+            updatePayButton();
+            
+            // Show auth modal
+            hideProfileModal();
+            showAuthModal('login');
+            
+            showResultModal('info', 'Logged Out', 'You have been successfully logged out.');
+        }
+
+        function saveUserData() {
+            if (!gameState.currentUser) return;
+            
+            // Update current user data from game state
+            gameState.currentUser.points = gameState.points;
+            gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
+            gameState.currentUser.gamesWon = gameState.gamesWon;
+            gameState.currentUser.totalWon = gameState.gamesWon * 500;
+            
+            // Update in users array
+            const userIndex = gameState.users.findIndex(u => u.id === gameState.currentUser.id);
+            if (userIndex !== -1) {
+                gameState.users[userIndex] = gameState.currentUser;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('kayksh_users', JSON.stringify(gameState.users));
+            localStorage.setItem('kayksh_currentUser', JSON.stringify(gameState.currentUser));
+        }
+
+        function loadUserStats() {
+            if (!gameState.currentUser) return;
+            
+            document.getElementById('profileName').textContent = gameState.currentUser.name;
+            document.getElementById('profileEmail').textContent = gameState.currentUser.email;
+            document.getElementById('profilePhone').textContent = gameState.currentUser.phone;
+            document.getElementById('profilePoints').textContent = gameState.currentUser.points.toLocaleString();
+            document.getElementById('profileGamesPlayed').textContent = gameState.currentUser.gamesPlayed;
+            document.getElementById('profileGamesWon').textContent = gameState.currentUser.gamesWon;
+            
+            const winRate = gameState.currentUser.gamesPlayed > 0 ? 
+                Math.round((gameState.currentUser.gamesWon / gameState.currentUser.gamesPlayed) * 100) : 0;
+            document.getElementById('profileWinRate').textContent = `${winRate}%`;
+            
+            const createdDate = new Date(gameState.currentUser.createdAt);
+            document.getElementById('profileCreated').textContent = 
+                createdDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            
+            loadTransactionHistory();
+        }
+
+        function loadTransactionHistory() {
+            if (!gameState.currentUser || !gameState.currentUser.transactions) return;
+            
+            const container = document.getElementById('transactionHistory');
+            container.innerHTML = '';
+            
+            // Show last 5 transactions
+            const recentTransactions = gameState.currentUser.transactions.slice(-5).reverse();
+            
+            if (recentTransactions.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No transactions yet</p>';
+                return;
+            }
+            
+            recentTransactions.forEach(transaction => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    background: #F8F9FA;
+                    padding: 12px 15px;
+                    border-radius: 10px;
+                    margin-bottom: 10px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                `;
+                
+                const date = new Date(transaction.date).toLocaleDateString();
+                
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600; color: var(--dark);">
+                            ${transaction.type === 'deposit' ? 'Deposit' : 'Cash Out'}
+                        </div>
+                        <div style="font-size: 0.8rem; color: #666;">${date}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; color: ${transaction.type === 'deposit' ? 'var(--success)' : 'var(--danger)'};">
+                            ${transaction.type === 'deposit' ? '+' : '-'}${transaction.points} pts
+                        </div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            KSh ${transaction.amount}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        function showAuthModal(form = 'login') {
+            const modal = document.getElementById('authModal');
+            
+            // Clear form fields
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerName').value = '';
+            document.getElementById('registerEmail').value = '';
+            document.getElementById('registerPhone').value = '';
+            document.getElementById('registerPassword').value = '';
+            
+            if (form === 'login') {
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+            } else {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').style.display = 'none';
+        }
+
+        function showProfileModal() {
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            
+            loadUserStats();
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function hideProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showResultModal('error', 'Login Failed', 'Please enter email and password');
+                return;
+            }
+            
+            const result = loginUser(email, password);
+            
+            if (result.success) {
+                hideAuthModal();
+                showResultModal('success', 'Welcome Back!', 
+                    `Logged in as ${result.user.name}. You have ${result.user.points} points.`);
+            } else {
+                showResultModal('error', 'Login Failed', result.message);
+            }
+        }
+
+        function handleRegister() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const phone = document.getElementById('registerPhone').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            const result = registerUser(name, email, phone, password);
+            
+            if (result.success) {
+                hideAuthModal();
+                showResultModal('success', 'Welcome to KayKSH!', 
+                    `Account created successfully! You received 100 bonus points to start.`);
+            } else {
+                showResultModal('error', 'Registration Failed', result.message);
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // ==============================================
+        // PAYMENT SYSTEM
+        // ==============================================
+
         function validatePhoneNumber() {
             const phoneInput = document.getElementById('phoneNumber');
             let phone = phoneInput.value.replace(/\D/g, '');
@@ -977,6 +1581,12 @@
         }
 
         async function initiatePayment() {
+            // Check authentication
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            
             // Validate phone number
             if (!gameState.phoneNumber.match(/^07[0-9]{8}$/)) {
                 showPaymentStatus('error', 'Please enter a valid M-Pesa number (07XXXXXXXXX)');
@@ -987,6 +1597,12 @@
             if (gameState.paymentInProgress) {
                 showPaymentStatus('error', 'A payment is already in progress');
                 return;
+            }
+            
+            // Update user's phone number if changed
+            if (gameState.currentUser && gameState.phoneNumber !== gameState.currentUser.phone) {
+                gameState.currentUser.phone = gameState.phoneNumber;
+                saveUserData();
             }
             
             // Show payment modal
@@ -1002,11 +1618,8 @@
             payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             
             try {
-                // ==============================================
-                // REAL PAYMENT INTEGRATION
-                // ==============================================
+                // DEMO MODE - Simulate payment
                 if (PAYHERO_CONFIG.demoMode) {
-                    // DEMO MODE - Simulate payment
                     console.log('Demo: Sending STK Push to', gameState.phoneNumber);
                     console.log('Amount: KSh', gameState.selectedAmount);
                     
@@ -1017,40 +1630,10 @@
                     const isSuccess = Math.random() > 0.2;
                     
                     if (isSuccess) {
-                        // Simulate successful payment
                         handleSuccessfulPayment();
                     } else {
-                        // Simulate failed payment
                         throw new Error('Payment failed. User cancelled or insufficient funds.');
                     }
-                    
-                } else {
-                    // ==============================================
-                    // REAL PAYHERO API CALL - UNCOMMENT AND CONFIGURE
-                    // ==============================================
-                    /*
-                    const response = await fetch(PAYHERO_CONFIG.apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer YOUR_API_KEY_HERE'
-                        },
-                        body: JSON.stringify({
-                            amount: gameState.selectedAmount,
-                            phone: gameState.phoneNumber,
-                            reference: 'KayKSH_' + Date.now(),
-                            callback_url: 'YOUR_WEBHOOK_URL'
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        handleSuccessfulPayment(data.transactionId);
-                    } else {
-                        throw new Error(data.message || 'Payment failed');
-                    }
-                    */
                 }
                 
             } catch (error) {
@@ -1059,7 +1642,7 @@
                 hidePaymentModal();
             } finally {
                 payBtn.disabled = false;
-                payBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Pay via M-Pesa STK';
+                updatePayButton();
             }
         }
 
@@ -1067,8 +1650,24 @@
             // Add points to user account
             gameState.points += gameState.selectedPoints;
             
+            // Update user data
+            if (gameState.currentUser) {
+                gameState.currentUser.points = gameState.points;
+                gameState.currentUser.transactions.push({
+                    type: 'deposit',
+                    amount: gameState.selectedAmount,
+                    points: gameState.selectedPoints,
+                    transactionId: transactionId || 'DEMO_' + Date.now(),
+                    date: new Date().toISOString()
+                });
+                
+                // Save user data
+                saveUserData();
+            }
+            
             // Update UI
             updatePointsDisplay();
+            updateAuthUI();
             updatePlayButton();
             
             // Show success message
@@ -1079,9 +1678,6 @@
             
             // Update payment modal
             updatePaymentModal('success');
-            
-            // Log transaction
-            console.log(`Payment successful: +${gameState.selectedPoints} points`);
             
             // Enable game after 3 seconds
             setTimeout(() => {
@@ -1114,6 +1710,7 @@
             if (gameState.paymentTimeout) {
                 clearTimeout(gameState.paymentTimeout);
             }
+            gameState.paymentInProgress = false;
         }
 
         function startPaymentTimer() {
@@ -1198,10 +1795,15 @@
         // ==============================================
         // GAME LOGIC
         // ==============================================
+
         function updatePlayButton() {
             const playBtn = document.getElementById('playBtn');
             
-            if (gameState.points < 100) {
+            if (!gameState.isAuthenticated) {
+                playBtn.disabled = true;
+                playBtn.innerHTML = '<i class="fas fa-lock"></i> Login to Play';
+                playBtn.style.opacity = '0.7';
+            } else if (gameState.points < 100) {
                 playBtn.disabled = true;
                 playBtn.innerHTML = '<i class="fas fa-lock"></i> Need Points to Play';
                 playBtn.style.opacity = '0.7';
@@ -1209,6 +1811,18 @@
                 playBtn.disabled = false;
                 playBtn.innerHTML = '<i class="fas fa-play"></i> Play Game (100 Points)';
                 playBtn.style.opacity = '1';
+            }
+        }
+
+        function updatePayButton() {
+            const payBtn = document.getElementById('payBtn');
+            
+            if (!gameState.isAuthenticated) {
+                payBtn.disabled = true;
+                payBtn.innerHTML = '<i class="fas fa-user-lock"></i> Login to Deposit';
+            } else {
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Pay via M-Pesa STK';
             }
         }
 
@@ -1260,6 +1874,12 @@
         }
 
         function startGame() {
+            // Check authentication
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            
             // Check if user has enough points
             if (gameState.points < 100) {
                 showResultModal('error', 'Not Enough Points', 
@@ -1271,7 +1891,13 @@
             
             // Deduct entry fee
             gameState.points -= 100;
+            if (gameState.currentUser) {
+                gameState.currentUser.points = gameState.points;
+                saveUserData();
+            }
+            
             updatePointsDisplay();
+            updateAuthUI();
             updatePlayButton();
             
             // Start game
@@ -1327,13 +1953,29 @@
                 gameState.points += prize;
                 gameState.gamesWon++;
                 
+                // Update user data
+                if (gameState.currentUser) {
+                    gameState.currentUser.points = gameState.points;
+                    gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
+                    gameState.currentUser.gamesWon = gameState.gamesWon;
+                    saveUserData();
+                }
+                
                 updatePointsDisplay();
+                updateAuthUI();
                 updatePlayButton();
                 updateStats();
                 
                 showResultModal('success', 'Correct Answer!', 
                     `You won ${prize} points! You now have ${gameState.points} points.`);
             } else {
+                // Update user data for loss
+                if (gameState.currentUser) {
+                    gameState.currentUser.points = gameState.points;
+                    gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
+                    saveUserData();
+                }
+                
                 updateStats();
                 showResultModal('error', 'Wrong Answer', 
                     `Correct answer: ${gameState.currentQuestion.correct_answer}. ` +
@@ -1346,6 +1988,14 @@
 
         function handleTimeUp() {
             gameState.gamesPlayed++;
+            
+            // Update user data
+            if (gameState.currentUser) {
+                gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
+                gameState.currentUser.points = gameState.points;
+                saveUserData();
+            }
+            
             updateStats();
             
             showResultModal('error', 'Time\'s Up!', 
@@ -1379,6 +2029,7 @@
             updatePointsDisplay();
             updateStats();
             updatePlayButton();
+            updatePayButton();
         }
 
         function updatePointsDisplay() {
@@ -1410,9 +2061,12 @@
             if (type === 'success') {
                 icon.innerHTML = '<i class="fas fa-trophy" style="color: #FF9F1C;"></i>';
                 titleElement.style.color = 'var(--success)';
-            } else {
+            } else if (type === 'error') {
                 icon.innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
                 titleElement.style.color = 'var(--danger)';
+            } else {
+                icon.innerHTML = '<i class="fas fa-info-circle" style="color: var(--primary);"></i>';
+                titleElement.style.color = 'var(--primary)';
             }
             
             titleElement.textContent = title;
@@ -1457,17 +2111,32 @@
         }
 
         // ==============================================
-        // CASH OUT FUNCTIONALITY (For later)
+        // CASH OUT FUNCTIONALITY
         // ==============================================
         function cashOutPoints() {
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            
             if (gameState.points < 500) {
                 showResultModal('error', 'Minimum Cash Out', 
                     'You need at least 500 points (KSh 5) to cash out.');
                 return;
             }
             
-            // In production, implement M-Pesa disbursement
             const cashAmount = Math.floor(gameState.points / 100); // 1 point = 1 KSh
+            
+            // Add transaction to history
+            if (gameState.currentUser) {
+                gameState.currentUser.transactions.push({
+                    type: 'cashout',
+                    amount: cashAmount,
+                    points: gameState.points,
+                    transactionId: 'CASHOUT_' + Date.now(),
+                    date: new Date().toISOString()
+                });
+            }
             
             showResultModal('info', 'Cash Out Request', 
                 `Request sent to cash out ${gameState.points} points (KSh ${cashAmount}). ` +
@@ -1475,24 +2144,19 @@
             
             // Reset points after cash out
             gameState.points = 0;
+            if (gameState.currentUser) {
+                gameState.currentUser.points = 0;
+                saveUserData();
+            }
+            
             updatePointsDisplay();
+            updateAuthUI();
             updatePlayButton();
         }
 
-        // Add cash out button to header (optional)
-        function addCashOutButton() {
-            const pointsContainer = document.querySelector('.points-container');
-            const cashOutBtn = document.createElement('button');
-            cashOutBtn.className = 'btn btn-primary';
-            cashOutBtn.style.marginLeft = '10px';
-            cashOutBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Cash Out';
-            cashOutBtn.onclick = cashOutPoints;
-            pointsContainer.appendChild(cashOutBtn);
-        }
-
+        // Add cash out button to profile modal (optional)
+        // You can add this button in the profile modal HTML if needed
         
     </script>
-
-    
 </body>
 </html>
