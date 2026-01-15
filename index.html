@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        /* ALL CSS STYLES REMAIN THE SAME AS BEFORE */
         :root {
             --primary: #FF6B35;
             --primary-dark: #E55A2B;
@@ -657,7 +658,7 @@
         <!-- Warning -->
         <div class="warning-box" id="warningBox">
             <i class="fas fa-exclamation-triangle"></i>
-            <span id="warningMessage">You need points to play! Deposit via M-Pesa first.</span>
+            <span id="warningMessage">Please login or register to play!</span>
         </div>
         
         <!-- Main Content -->
@@ -1128,138 +1129,160 @@
         ];
 
         // ==============================================
-        // INITIALIZATION
+        // INITIALIZATION - SIMPLIFIED VERSION
         // ==============================================
+        
+        // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing KayKSH Game...');
-            initializeAuth();
-            initializeGame();
-            setupEventListeners();
-            updateUI();
+            console.log('DOM fully loaded. Initializing KayKSH...');
             
-            // Show welcome modal on first visit
-            setTimeout(() => {
-                if (!gameState.isAuthenticated) {
-                    showResultModal('info', 'Welcome to KayKSH!', 'Create an account or login to play trivia and win real money.');
-                }
-            }, 1000);
+            // Initialize everything
+            initApp();
         });
 
-        function initializeAuth() {
+        function initApp() {
+            console.log('Initializing app...');
+            
+            // Initialize authentication first
+            initAuth();
+            
+            // Setup all event listeners
+            setupAllEventListeners();
+            
+            // Setup game
+            initGame();
+            
+            // Update UI
+            updateUI();
+            
+            console.log('App initialized successfully!');
+        }
+
+        function initAuth() {
             console.log('Initializing authentication...');
-            // Check if user is already logged in
-            const savedUser = localStorage.getItem('kayksh_currentUser');
-            if (savedUser) {
-                try {
+            
+            // Try to load saved user
+            try {
+                const savedUser = localStorage.getItem('kayksh_currentUser');
+                const savedUsers = localStorage.getItem('kayksh_users');
+                
+                if (savedUsers) {
+                    gameState.users = JSON.parse(savedUsers);
+                    console.log('Loaded users from storage:', gameState.users.length);
+                }
+                
+                if (savedUser) {
                     gameState.currentUser = JSON.parse(savedUser);
                     gameState.isAuthenticated = true;
                     gameState.points = gameState.currentUser.points || 0;
                     gameState.gamesPlayed = gameState.currentUser.gamesPlayed || 0;
                     gameState.gamesWon = gameState.currentUser.gamesWon || 0;
                     
-                    // Update phone number in payment form
+                    // Update phone number if available
                     if (gameState.currentUser.phone) {
-                        document.getElementById('phoneNumber').value = gameState.currentUser.phone;
                         gameState.phoneNumber = gameState.currentUser.phone;
+                        document.getElementById('phoneNumber').value = gameState.currentUser.phone;
                     }
                     
-                    console.log('User logged in:', gameState.currentUser.name);
+                    console.log('User auto-logged in:', gameState.currentUser.name);
+                    
+                    // Update UI for logged in user
                     updateAuthUI();
-                    updatePlayButton();
-                    updatePayButton();
-                    
-                    // Hide warning if user has points
-                    updateWarningMessage();
-                    
-                } catch (e) {
-                    console.error('Error loading user data:', e);
-                    localStorage.removeItem('kayksh_currentUser');
+                } else {
+                    console.log('No saved user found. Showing login buttons.');
                 }
-            }
-            
-            // Load all users from localStorage
-            const savedUsers = localStorage.getItem('kayksh_users');
-            if (savedUsers) {
-                try {
-                    gameState.users = JSON.parse(savedUsers);
-                    console.log('Loaded', gameState.users.length, 'users from storage');
-                } catch (e) {
-                    console.error('Error loading users:', e);
-                    gameState.users = [];
-                }
-            } else {
-                gameState.users = [];
-                console.log('No users found, starting fresh');
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                localStorage.removeItem('kayksh_currentUser');
+                localStorage.removeItem('kayksh_users');
             }
         }
 
-        function initializeGame() {
-            console.log('Initializing game...');
-            updatePointsDisplay();
-            updatePlayButton();
-            updatePayButton();
-            setupAmountSelection();
-        }
-
-        function setupEventListeners() {
-            console.log('Setting up event listeners...');
+        function setupAllEventListeners() {
+            console.log('Setting up all event listeners...');
             
-            // Play button
-            document.getElementById('playBtn').addEventListener('click', startGame);
-            
-            // Submit button
-            document.getElementById('submitBtn').addEventListener('click', submitAnswer);
-            
-            // Pay button
-            document.getElementById('payBtn').addEventListener('click', initiatePayment);
-            
-            // Phone number input
-            document.getElementById('phoneNumber').addEventListener('input', validatePhoneNumber);
-            
-            // Auth Listeners
-            document.getElementById('loginButton').addEventListener('click', () => showAuthModal('login'));
-            document.getElementById('registerButton').addEventListener('click', () => showAuthModal('register'));
-            
-            // Profile Listeners
-            document.getElementById('profileBadge').addEventListener('click', showProfileModal);
-            
-            // Login Form
-            document.getElementById('loginBtn').addEventListener('click', handleLogin);
-            document.getElementById('showRegister').addEventListener('click', (e) => {
-                e.preventDefault();
-                showAuthModal('register');
-            });
-            
-            // Register Form
-            document.getElementById('registerBtn').addEventListener('click', handleRegister);
-            document.getElementById('showLogin').addEventListener('click', (e) => {
-                e.preventDefault();
+            // ===== HEADER BUTTONS =====
+            document.getElementById('loginButton').addEventListener('click', function() {
+                console.log('Login button clicked');
                 showAuthModal('login');
             });
             
-            // Profile Modal
+            document.getElementById('registerButton').addEventListener('click', function() {
+                console.log('Register button clicked');
+                showAuthModal('register');
+            });
+            
+            // ===== PROFILE SECTION =====
+            document.getElementById('profileBadge').addEventListener('click', function() {
+                console.log('Profile badge clicked');
+                showProfileModal();
+            });
+            
+            // ===== AUTH MODAL BUTTONS =====
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('registerBtn').addEventListener('click', handleRegister);
+            
+            // ===== AUTH MODAL LINKS =====
+            document.getElementById('showRegister').addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Show register form clicked');
+                showAuthModal('register');
+            });
+            
+            document.getElementById('showLogin').addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Show login form clicked');
+                showAuthModal('login');
+            });
+            
+            // ===== PROFILE MODAL BUTTONS =====
             document.getElementById('logoutBtn').addEventListener('click', logoutUser);
             document.getElementById('cashOutBtn').addEventListener('click', cashOutPoints);
             document.getElementById('closeProfile').addEventListener('click', hideProfileModal);
             
-            // Modals
+            // ===== GAME BUTTONS =====
+            document.getElementById('playBtn').addEventListener('click', startGame);
+            document.getElementById('submitBtn').addEventListener('click', submitAnswer);
+            
+            // ===== PAYMENT BUTTONS =====
+            document.getElementById('payBtn').addEventListener('click', initiatePayment);
+            
+            // ===== PHONE INPUT =====
+            document.getElementById('phoneNumber').addEventListener('input', validatePhoneNumber);
+            
+            // ===== AMOUNT SELECTION =====
+            setupAmountSelection();
+            
+            // ===== MODAL BUTTONS =====
             document.getElementById('closeModal').addEventListener('click', closeModal);
             document.getElementById('cancelPayment').addEventListener('click', cancelPayment);
             document.getElementById('checkPayment').addEventListener('click', checkPaymentStatus);
             
-            // Close modals when clicking outside
+            // ===== CLOSE MODALS ON OUTSIDE CLICK =====
             document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.style.display = 'none';
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
                     }
                 });
             });
             
-            // Keyboard shortcuts
-            document.addEventListener('keydown', handleKeyboardShortcuts);
+            console.log('All event listeners set up!');
+        }
+
+        function initGame() {
+            console.log('Initializing game...');
             
-            console.log('Event listeners set up successfully');
+            // Update all UI elements
+            updatePointsDisplay();
+            updatePlayButton();
+            updatePayButton();
+            updateWarningMessage();
+            
+            // Setup amount selection
+            setupAmountSelection();
+            
+            console.log('Game initialized!');
         }
 
         function setupAmountSelection() {
@@ -1268,64 +1291,224 @@
                 option.addEventListener('click', function() {
                     console.log('Amount selected:', this.dataset.amount);
                     
-                    // Remove selection from all options
+                    // Remove selection from all
                     amountOptions.forEach(opt => opt.classList.remove('selected'));
                     
-                    // Select clicked option
+                    // Select this one
                     this.classList.add('selected');
                     
                     // Update game state
                     gameState.selectedAmount = parseInt(this.dataset.amount);
                     gameState.selectedPoints = parseInt(this.dataset.points);
                     
-                    console.log('Selected:', gameState.selectedAmount, 'for', gameState.selectedPoints, 'points');
+                    console.log('Selected amount:', gameState.selectedAmount, 'points:', gameState.selectedPoints);
                 });
             });
         }
 
         // ==============================================
-        // USER AUTHENTICATION SYSTEM
+        // AUTHENTICATION FUNCTIONS
         // ==============================================
 
+        function showAuthModal(formType = 'login') {
+            console.log('Showing auth modal:', formType);
+            
+            const modal = document.getElementById('authModal');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            // Clear any previous form values
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerName').value = '';
+            document.getElementById('registerEmail').value = '';
+            document.getElementById('registerPhone').value = '';
+            document.getElementById('registerPassword').value = '';
+            
+            // Show the correct form
+            if (formType === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+            
+            // Show the modal
+            modal.style.display = 'flex';
+        }
+
+        function hideAuthModal() {
+            console.log('Hiding auth modal');
+            document.getElementById('authModal').style.display = 'none';
+        }
+
+        function handleLogin() {
+            console.log('Login button clicked in form');
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            console.log('Login attempt with email:', email);
+            
+            if (!email || !password) {
+                showResultModal('error', 'Login Failed', 'Please enter both email and password');
+                return;
+            }
+            
+            // Find user
+            const user = gameState.users.find(u => u.email === email && u.password === password);
+            
+            if (!user) {
+                showResultModal('error', 'Login Failed', 'Invalid email or password');
+                return;
+            }
+            
+            // Login successful
+            gameState.currentUser = user;
+            gameState.isAuthenticated = true;
+            gameState.points = user.points;
+            gameState.gamesPlayed = user.gamesPlayed;
+            gameState.gamesWon = user.gamesWon;
+            
+            // Update phone number
+            gameState.phoneNumber = user.phone;
+            document.getElementById('phoneNumber').value = user.phone;
+            
+            // Save to localStorage
+            localStorage.setItem('kayksh_currentUser', JSON.stringify(user));
+            
+            // Update UI
+            updateAuthUI();
+            updateUI();
+            
+            // Close modal and show success
+            hideAuthModal();
+            showResultModal('success', 'Welcome Back!', 
+                `Logged in as ${user.name}. You have ${user.points} points.`);
+            
+            console.log('Login successful for:', user.name);
+        }
+
+        function handleRegister() {
+            console.log('Register button clicked in form');
+            
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const phone = document.getElementById('registerPhone').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            
+            console.log('Registration attempt:', { name, email, phone });
+            
+            // Validate inputs
+            if (!name || !email || !phone || !password) {
+                showResultModal('error', 'Registration Failed', 'All fields are required');
+                return;
+            }
+            
+            if (!validateEmail(email)) {
+                showResultModal('error', 'Registration Failed', 'Please enter a valid email address');
+                return;
+            }
+            
+            if (!phone.match(/^07[0-9]{8}$/)) {
+                showResultModal('error', 'Registration Failed', 'Please enter a valid Kenyan phone number (07XXXXXXXXX)');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showResultModal('error', 'Registration Failed', 'Password must be at least 6 characters');
+                return;
+            }
+            
+            // Check if user already exists
+            const existingUser = gameState.users.find(user => user.email === email);
+            if (existingUser) {
+                showResultModal('error', 'Registration Failed', 'Email already registered');
+                return;
+            }
+            
+            // Create new user
+            const newUser = {
+                id: Date.now().toString(),
+                name: name,
+                email: email,
+                phone: phone,
+                password: password,
+                points: 100, // Bonus points
+                gamesPlayed: 0,
+                gamesWon: 0,
+                totalWon: 0,
+                createdAt: new Date().toISOString(),
+                transactions: []
+            };
+            
+            // Add to users array
+            gameState.users.push(newUser);
+            
+            // Save to localStorage
+            localStorage.setItem('kayksh_users', JSON.stringify(gameState.users));
+            
+            // Auto login
+            gameState.currentUser = newUser;
+            gameState.isAuthenticated = true;
+            gameState.points = 100;
+            gameState.phoneNumber = phone;
+            
+            // Save current user
+            localStorage.setItem('kayksh_currentUser', JSON.stringify(newUser));
+            
+            // Update UI
+            updateAuthUI();
+            updateUI();
+            
+            // Close modal and show success
+            hideAuthModal();
+            showResultModal('success', 'Welcome to KayKSH!', 
+                `Account created successfully! You received 100 bonus points to start.`);
+            
+            console.log('Registration successful for:', name);
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
         function updateAuthUI() {
+            console.log('Updating auth UI...');
+            
             const authButtons = document.getElementById('authButtons');
             const profileSection = document.getElementById('profileSection');
             
             if (gameState.isAuthenticated && gameState.currentUser) {
-                // Show profile section
+                // User is logged in
                 authButtons.style.display = 'none';
                 profileSection.style.display = 'flex';
                 
                 // Update user info
-                document.getElementById('userName').textContent = 
-                    gameState.currentUser.name.split(' ')[0]; // First name only
-                document.getElementById('displayPoints').textContent = 
-                    gameState.currentUser.points.toLocaleString();
+                const firstName = gameState.currentUser.name.split(' ')[0];
+                document.getElementById('userName').textContent = firstName;
+                document.getElementById('displayPoints').textContent = gameState.currentUser.points.toLocaleString();
+                document.getElementById('userPoints').textContent = gameState.currentUser.points.toLocaleString();
                 
-                // Update main points display
-                document.getElementById('userPoints').textContent = 
-                    gameState.currentUser.points.toLocaleString();
-                
-                // Update game state points
+                // Update game state
                 gameState.points = gameState.currentUser.points;
-                updatePlayButton();
-                updatePayButton();
                 
-                // Update warning message
-                updateWarningMessage();
-                
-                // Update question text
-                updateQuestionText();
-                
+                console.log('Auth UI updated for logged in user:', firstName);
             } else {
-                // Show auth buttons
+                // User is not logged in
                 authButtons.style.display = 'flex';
                 profileSection.style.display = 'none';
                 
-                // Update question text
-                document.getElementById('questionText').textContent = 
-                    'Please login or register to play trivia and win money!';
+                console.log('Auth UI updated for guest user');
             }
+            
+            // Update buttons
+            updatePlayButton();
+            updatePayButton();
+            updateWarningMessage();
+            updateQuestionText();
         }
 
         function updateWarningMessage() {
@@ -1356,99 +1539,32 @@
             }
         }
 
-        function registerUser(name, email, phone, password) {
-            console.log('Registering user:', email);
-            
-            // Validate inputs
-            if (!name || !email || !phone || !password) {
-                return { success: false, message: 'All fields are required' };
+        function showProfileModal() {
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
             }
             
-            if (!validateEmail(email)) {
-                return { success: false, message: 'Invalid email address' };
-            }
+            console.log('Showing profile modal for:', gameState.currentUser.name);
             
-            if (!phone.match(/^07[0-9]{8}$/)) {
-                return { success: false, message: 'Invalid phone number (07XXXXXXXXX)' };
-            }
+            // Load user stats
+            loadUserStats();
             
-            if (password.length < 6) {
-                return { success: false, message: 'Password must be at least 6 characters' };
-            }
-            
-            // Check if user already exists
-            const existingUser = gameState.users.find(user => user.email === email);
-            if (existingUser) {
-                return { success: false, message: 'Email already registered' };
-            }
-            
-            // Create new user
-            const newUser = {
-                id: Date.now().toString(),
-                name: name,
-                email: email,
-                phone: phone,
-                password: password,
-                points: 100, // Give 100 bonus points to start
-                gamesPlayed: 0,
-                gamesWon: 0,
-                totalWon: 0,
-                createdAt: new Date().toISOString(),
-                transactions: []
-            };
-            
-            // Add to users array
-            gameState.users.push(newUser);
-            
-            // Save to localStorage
-            localStorage.setItem('kayksh_users', JSON.stringify(gameState.users));
-            console.log('User registered successfully:', email);
-            
-            // Auto login after registration
-            return loginUser(email, password);
+            // Show modal
+            document.getElementById('profileModal').style.display = 'flex';
         }
 
-        function loginUser(email, password) {
-            console.log('Logging in user:', email);
-            
-            // Find user
-            const user = gameState.users.find(u => u.email === email && u.password === password);
-            
-            if (!user) {
-                return { success: false, message: 'Invalid email or password' };
-            }
-            
-            // Set current user
-            gameState.currentUser = user;
-            gameState.isAuthenticated = true;
-            
-            // Update game state
-            gameState.points = user.points;
-            gameState.gamesPlayed = user.gamesPlayed;
-            gameState.gamesWon = user.gamesWon;
-            
-            // Update phone number
-            gameState.phoneNumber = user.phone;
-            document.getElementById('phoneNumber').value = user.phone;
-            
-            // Save to localStorage
-            localStorage.setItem('kayksh_currentUser', JSON.stringify(user));
-            
-            // Update UI
-            updateAuthUI();
-            updateUI();
-            
-            console.log('Login successful for:', user.name);
-            return { success: true, user: user };
+        function hideProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
         }
 
         function logoutUser() {
-            console.log('Logging out user');
+            console.log('Logging out user:', gameState.currentUser?.name);
             
-            // Save user data before logout
+            // Save user data
             saveUserData();
             
-            // Clear current user
+            // Clear user state
             gameState.currentUser = null;
             gameState.isAuthenticated = false;
             gameState.points = 0;
@@ -1465,22 +1581,20 @@
             // Update UI
             updateAuthUI();
             updateUI();
-            updatePlayButton();
-            updatePayButton();
             
-            // Show auth modal
+            // Hide profile modal
             hideProfileModal();
-            showAuthModal('login');
             
+            // Show logout message
             showResultModal('info', 'Logged Out', 'You have been successfully logged out.');
+            
+            console.log('Logout successful');
         }
 
         function saveUserData() {
             if (!gameState.currentUser) return;
             
-            console.log('Saving user data for:', gameState.currentUser.name);
-            
-            // Update current user data from game state
+            // Update user data
             gameState.currentUser.points = gameState.points;
             gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
             gameState.currentUser.gamesWon = gameState.gamesWon;
@@ -1496,12 +1610,15 @@
             localStorage.setItem('kayksh_users', JSON.stringify(gameState.users));
             localStorage.setItem('kayksh_currentUser', JSON.stringify(gameState.currentUser));
             
-            console.log('User data saved successfully');
+            console.log('User data saved for:', gameState.currentUser.name);
         }
 
         function loadUserStats() {
             if (!gameState.currentUser) return;
             
+            console.log('Loading user stats for:', gameState.currentUser.name);
+            
+            // Basic info
             document.getElementById('profileName').textContent = gameState.currentUser.name;
             document.getElementById('profileEmail').textContent = gameState.currentUser.email;
             document.getElementById('profilePhone').textContent = gameState.currentUser.phone;
@@ -1509,10 +1626,12 @@
             document.getElementById('profileGamesPlayed').textContent = gameState.currentUser.gamesPlayed;
             document.getElementById('profileGamesWon').textContent = gameState.currentUser.gamesWon;
             
+            // Win rate
             const winRate = gameState.currentUser.gamesPlayed > 0 ? 
                 Math.round((gameState.currentUser.gamesWon / gameState.currentUser.gamesPlayed) * 100) : 0;
             document.getElementById('profileWinRate').textContent = `${winRate}%`;
             
+            // Created date
             const createdDate = new Date(gameState.currentUser.createdAt);
             document.getElementById('profileCreated').textContent = 
                 createdDate.toLocaleDateString('en-US', { 
@@ -1521,6 +1640,7 @@
                     day: 'numeric' 
                 });
             
+            // Load transactions
             loadTransactionHistory();
         }
 
@@ -1530,7 +1650,7 @@
             const container = document.getElementById('transactionHistory');
             container.innerHTML = '';
             
-            // Show last 5 transactions
+            // Get last 5 transactions
             const recentTransactions = gameState.currentUser.transactions.slice(-5).reverse();
             
             if (recentTransactions.length === 0) {
@@ -1573,341 +1693,8 @@
             });
         }
 
-        function showAuthModal(form = 'login') {
-            console.log('Showing auth modal:', form);
-            const modal = document.getElementById('authModal');
-            
-            // Clear form fields
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('registerName').value = '';
-            document.getElementById('registerEmail').value = '';
-            document.getElementById('registerPhone').value = '';
-            document.getElementById('registerPassword').value = '';
-            
-            if (form === 'login') {
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('registerForm').style.display = 'none';
-            } else {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'block';
-            }
-            
-            modal.style.display = 'flex';
-        }
-
-        function hideAuthModal() {
-            document.getElementById('authModal').style.display = 'none';
-        }
-
-        function showProfileModal() {
-            if (!gameState.isAuthenticated) {
-                showAuthModal('login');
-                return;
-            }
-            
-            console.log('Showing profile modal');
-            loadUserStats();
-            document.getElementById('profileModal').style.display = 'flex';
-        }
-
-        function hideProfileModal() {
-            document.getElementById('profileModal').style.display = 'none';
-        }
-
-        function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!email || !password) {
-                showResultModal('error', 'Login Failed', 'Please enter email and password');
-                return;
-            }
-            
-            const result = loginUser(email, password);
-            
-            if (result.success) {
-                hideAuthModal();
-                showResultModal('success', 'Welcome Back!', 
-                    `Logged in as ${result.user.name}. You have ${result.user.points} points.`);
-            } else {
-                showResultModal('error', 'Login Failed', result.message);
-            }
-        }
-
-        function handleRegister() {
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
-            const phone = document.getElementById('registerPhone').value;
-            const password = document.getElementById('registerPassword').value;
-            
-            const result = registerUser(name, email, phone, password);
-            
-            if (result.success) {
-                hideAuthModal();
-                showResultModal('success', 'Welcome to KayKSH!', 
-                    `Account created successfully! You received 100 bonus points to start.`);
-            } else {
-                showResultModal('error', 'Registration Failed', result.message);
-            }
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
         // ==============================================
-        // PAYMENT SYSTEM
-        // ==============================================
-
-        function validatePhoneNumber() {
-            const phoneInput = document.getElementById('phoneNumber');
-            let phone = phoneInput.value.replace(/\D/g, '');
-            
-            // Format as 07XXXXXXXXX
-            if (phone.startsWith('0') && phone.length <= 10) {
-                phoneInput.value = phone;
-            } else if (phone.startsWith('254') && phone.length === 12) {
-                // Convert 254 to 0
-                phone = '0' + phone.substring(3);
-                phoneInput.value = phone;
-            } else if (phone.startsWith('7') && phone.length === 9) {
-                phone = '0' + phone;
-                phoneInput.value = phone;
-            }
-            
-            gameState.phoneNumber = phoneInput.value;
-            console.log('Phone number updated:', gameState.phoneNumber);
-        }
-
-        async function initiatePayment() {
-            console.log('Initiating payment...');
-            
-            // Check authentication
-            if (!gameState.isAuthenticated) {
-                showAuthModal('login');
-                return;
-            }
-            
-            // Validate phone number
-            if (!gameState.phoneNumber.match(/^07[0-9]{8}$/)) {
-                showPaymentStatus('error', 'Please enter a valid M-Pesa number (07XXXXXXXXX)');
-                document.getElementById('phoneNumber').focus();
-                return;
-            }
-            
-            if (gameState.paymentInProgress) {
-                showPaymentStatus('error', 'A payment is already in progress');
-                return;
-            }
-            
-            // Update user's phone number if changed
-            if (gameState.currentUser && gameState.phoneNumber !== gameState.currentUser.phone) {
-                gameState.currentUser.phone = gameState.phoneNumber;
-                saveUserData();
-            }
-            
-            // Show payment modal
-            showPaymentModal();
-            
-            // Start payment process
-            await processSTKPush();
-        }
-
-        async function processSTKPush() {
-            const payBtn = document.getElementById('payBtn');
-            payBtn.disabled = true;
-            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            
-            try {
-                console.log('Processing STK Push for:', gameState.phoneNumber, 'Amount:', gameState.selectedAmount);
-                
-                // DEMO MODE - Simulate payment
-                if (PAYHERO_CONFIG.demoMode) {
-                    console.log('Demo: Sending STK Push to', gameState.phoneNumber);
-                    console.log('Amount: KSh', gameState.selectedAmount);
-                    
-                    // Simulate API delay
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    
-                    // Simulate successful payment 80% of the time
-                    const isSuccess = Math.random() > 0.2;
-                    
-                    if (isSuccess) {
-                        handleSuccessfulPayment();
-                    } else {
-                        throw new Error('Payment failed. User cancelled or insufficient funds.');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Payment error:', error);
-                showPaymentStatus('error', error.message || 'Payment failed. Please try again.');
-                hidePaymentModal();
-            } finally {
-                payBtn.disabled = false;
-                updatePayButton();
-            }
-        }
-
-        function handleSuccessfulPayment(transactionId = null) {
-            console.log('Payment successful! Adding points:', gameState.selectedPoints);
-            
-            // Add points to user account
-            gameState.points += gameState.selectedPoints;
-            
-            // Update user data
-            if (gameState.currentUser) {
-                gameState.currentUser.points = gameState.points;
-                gameState.currentUser.transactions.push({
-                    type: 'deposit',
-                    amount: gameState.selectedAmount,
-                    points: gameState.selectedPoints,
-                    transactionId: transactionId || 'DEMO_' + Date.now(),
-                    date: new Date().toISOString()
-                });
-                
-                // Save user data
-                saveUserData();
-            }
-            
-            // Update UI
-            updatePointsDisplay();
-            updateAuthUI();
-            updatePlayButton();
-            
-            // Show success message
-            showPaymentStatus('success', 
-                `${gameState.selectedPoints} points added to your account! ` +
-                `Transaction ID: ${transactionId || 'DEMO_' + Date.now()}`
-            );
-            
-            // Update payment modal
-            updatePaymentModal('success');
-            
-            // Enable game after 3 seconds
-            setTimeout(() => {
-                hidePaymentModal();
-                showResultModal('success', 
-                    'Payment Successful!', 
-                    `You now have ${gameState.points} points. You can now play the trivia game!`
-                );
-            }, 3000);
-        }
-
-        function showPaymentModal() {
-            console.log('Showing payment modal');
-            document.getElementById('processingAmount').textContent = 
-                `KSh ${gameState.selectedAmount}`;
-            document.getElementById('processingPhone').textContent = 
-                gameState.phoneNumber;
-            
-            const modal = document.getElementById('paymentModal');
-            modal.style.display = 'flex';
-            
-            // Start payment timer (60 seconds)
-            startPaymentTimer();
-        }
-
-        function hidePaymentModal() {
-            console.log('Hiding payment modal');
-            const modal = document.getElementById('paymentModal');
-            modal.style.display = 'none';
-            
-            // Clear timer
-            if (gameState.paymentTimeout) {
-                clearTimeout(gameState.paymentTimeout);
-            }
-            gameState.paymentInProgress = false;
-        }
-
-        function startPaymentTimer() {
-            console.log('Starting payment timer');
-            let seconds = 60;
-            const timerElement = document.getElementById('paymentTimer');
-            const secondsElement = document.getElementById('timerSeconds');
-            
-            gameState.paymentInProgress = true;
-            
-            const timer = setInterval(() => {
-                seconds--;
-                timerElement.textContent = seconds;
-                secondsElement.textContent = seconds;
-                
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    paymentTimeout();
-                }
-            }, 1000);
-            
-            // Set overall timeout
-            gameState.paymentTimeout = setTimeout(() => {
-                clearInterval(timer);
-                paymentTimeout();
-            }, 60000);
-        }
-
-        function paymentTimeout() {
-            console.log('Payment timeout');
-            gameState.paymentInProgress = false;
-            showPaymentStatus('error', 'Payment timeout. Please try again.');
-            hidePaymentModal();
-        }
-
-        function cancelPayment() {
-            console.log('Cancelling payment');
-            if (gameState.paymentTimeout) {
-                clearTimeout(gameState.paymentTimeout);
-            }
-            gameState.paymentInProgress = false;
-            hidePaymentModal();
-            showPaymentStatus('info', 'Payment cancelled');
-        }
-
-        function checkPaymentStatus() {
-            console.log('Checking payment status');
-            // In real implementation, check with your backend
-            showPaymentStatus('info', 'Checking payment status...');
-            
-            // Simulate status check
-            setTimeout(() => {
-                if (Math.random() > 0.5) {
-                    handleSuccessfulPayment();
-                } else {
-                    showPaymentStatus('info', 'Payment still pending. Check your phone.');
-                }
-            }, 1000);
-        }
-
-        function updatePaymentModal(status) {
-            const steps = document.querySelectorAll('#paymentModal .modal-content > div > div > div');
-            if (status === 'success') {
-                steps[2].style.background = 'var(--success)';
-                steps[2].style.color = 'white';
-            }
-        }
-
-        function showPaymentStatus(type, message) {
-            console.log('Payment status:', type, message);
-            const statusElement = document.getElementById('paymentStatus');
-            statusElement.className = `payment-status ${type}`;
-            statusElement.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                ${message}
-            `;
-            statusElement.style.display = 'block';
-            
-            // Auto hide after 5 seconds
-            if (type !== 'success') {
-                setTimeout(() => {
-                    statusElement.style.display = 'none';
-                }, 5000);
-            }
-        }
-
-        // ==============================================
-        // GAME LOGIC
+        // GAME FUNCTIONS
         // ==============================================
 
         function updatePlayButton() {
@@ -1940,8 +1727,60 @@
             }
         }
 
+        function startGame() {
+            console.log('Starting game...');
+            
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            
+            if (gameState.points < 100) {
+                showResultModal('error', 'Not Enough Points', 
+                    'You need at least 100 points to play. Deposit first.');
+                return;
+            }
+            
+            if (gameState.isPlaying) return;
+            
+            // Deduct points
+            gameState.points -= 100;
+            if (gameState.currentUser) {
+                gameState.currentUser.points = gameState.points;
+                saveUserData();
+            }
+            
+            // Update UI
+            updatePointsDisplay();
+            updateAuthUI();
+            updatePlayButton();
+            
+            // Start game
+            gameState.isPlaying = true;
+            gameState.selectedAnswer = null;
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('playBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Game Active';
+            
+            // Setup timer
+            gameState.timer = 30;
+            document.getElementById('countdown').textContent = gameState.timer;
+            clearInterval(gameState.timerInterval);
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer--;
+                document.getElementById('countdown').textContent = gameState.timer;
+                
+                if (gameState.timer <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    handleTimeUp();
+                }
+            }, 1000);
+            
+            // Load question
+            loadRandomQuestion();
+        }
+
         function loadRandomQuestion() {
-            console.log('Loading random question...');
             const randomIndex = Math.floor(Math.random() * triviaQuestions.length);
             gameState.currentQuestion = triviaQuestions[randomIndex];
             
@@ -1950,11 +1789,11 @@
             document.getElementById('questionCategory').textContent = gameState.currentQuestion.category;
             document.getElementById('questionDifficulty').textContent = gameState.currentQuestion.difficulty;
             
-            // Clear options
+            // Clear and create options
             const optionsContainer = document.getElementById('optionsContainer');
             optionsContainer.innerHTML = '';
             
-            // Combine answers and shuffle
+            // Combine and shuffle answers
             const allAnswers = [...gameState.currentQuestion.incorrect_answers, 
                                 gameState.currentQuestion.correct_answer];
             shuffleArray(allAnswers);
@@ -1973,93 +1812,29 @@
                 optionBtn.addEventListener('click', function() {
                     if (!gameState.isPlaying) return;
                     
-                    // Deselect all options
+                    // Deselect all
                     document.querySelectorAll('.option-btn').forEach(btn => {
                         btn.classList.remove('selected');
                     });
                     
-                    // Select this option
+                    // Select this one
                     this.classList.add('selected');
                     gameState.selectedAnswer = answer;
                     document.getElementById('submitBtn').disabled = false;
-                    
-                    console.log('Answer selected:', answer);
                 });
                 
                 optionsContainer.appendChild(optionBtn);
             });
-            
-            console.log('Question loaded:', gameState.currentQuestion.question);
-        }
-
-        function startGame() {
-            console.log('Starting game...');
-            
-            // Check authentication
-            if (!gameState.isAuthenticated) {
-                showAuthModal('login');
-                return;
-            }
-            
-            // Check if user has enough points
-            if (gameState.points < 100) {
-                showResultModal('error', 'Not Enough Points', 
-                    'You need at least 100 points to play. Deposit first.');
-                return;
-            }
-            
-            if (gameState.isPlaying) return;
-            
-            // Deduct entry fee
-            gameState.points -= 100;
-            if (gameState.currentUser) {
-                gameState.currentUser.points = gameState.points;
-                saveUserData();
-            }
-            
-            updatePointsDisplay();
-            updateAuthUI();
-            updatePlayButton();
-            
-            // Start game
-            gameState.isPlaying = true;
-            gameState.selectedAnswer = null;
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('playBtn').disabled = true;
-            document.getElementById('playBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Game Active';
-            
-            // Reset timer
-            gameState.timer = 30;
-            document.getElementById('countdown').textContent = gameState.timer;
-            
-            // Start timer
-            clearInterval(gameState.timerInterval);
-            gameState.timerInterval = setInterval(() => {
-                gameState.timer--;
-                document.getElementById('countdown').textContent = gameState.timer;
-                
-                if (gameState.timer <= 0) {
-                    clearInterval(gameState.timerInterval);
-                    handleTimeUp();
-                }
-            }, 1000);
-            
-            // Load question
-            loadRandomQuestion();
-            
-            console.log('Game started successfully');
         }
 
         function submitAnswer() {
-            console.log('Submitting answer:', gameState.selectedAnswer);
-            
             if (!gameState.selectedAnswer || !gameState.currentQuestion) return;
             
             clearInterval(gameState.timerInterval);
             
             const isCorrect = gameState.selectedAnswer === gameState.currentQuestion.correct_answer;
             
-            // Show correct/incorrect styling
+            // Show correct/incorrect
             document.querySelectorAll('.option-btn').forEach(btn => {
                 btn.disabled = true;
                 if (btn.dataset.answer === gameState.currentQuestion.correct_answer) {
@@ -2073,12 +1848,10 @@
             gameState.gamesPlayed++;
             
             if (isCorrect) {
-                // Win prize
                 const prize = 500;
                 gameState.points += prize;
                 gameState.gamesWon++;
                 
-                // Update user data
                 if (gameState.currentUser) {
                     gameState.currentUser.points = gameState.points;
                     gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
@@ -2088,14 +1861,11 @@
                 
                 updatePointsDisplay();
                 updateAuthUI();
-                updatePlayButton();
                 updateStats();
                 
-                console.log('Correct answer! Won', prize, 'points');
                 showResultModal('success', 'Correct Answer!', 
                     `You won ${prize} points! You now have ${gameState.points} points.`);
             } else {
-                // Update user data for loss
                 if (gameState.currentUser) {
                     gameState.currentUser.points = gameState.points;
                     gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
@@ -2103,21 +1873,17 @@
                 }
                 
                 updateStats();
-                console.log('Wrong answer. Correct was:', gameState.currentQuestion.correct_answer);
                 showResultModal('error', 'Wrong Answer', 
                     `Correct answer: ${gameState.currentQuestion.correct_answer}. ` +
                     `You lost 100 points. You have ${gameState.points} points remaining.`);
             }
             
-            // Reset game after delay
             setTimeout(resetGame, 3000);
         }
 
         function handleTimeUp() {
-            console.log('Time up!');
             gameState.gamesPlayed++;
             
-            // Update user data
             if (gameState.currentUser) {
                 gameState.currentUser.gamesPlayed = gameState.gamesPlayed;
                 gameState.currentUser.points = gameState.points;
@@ -2134,14 +1900,12 @@
         }
 
         function resetGame() {
-            console.log('Resetting game...');
             gameState.isPlaying = false;
             gameState.selectedAnswer = null;
             
             document.getElementById('submitBtn').disabled = true;
             updatePlayButton();
             
-            // If user still has points, load new question
             if (gameState.points >= 100) {
                 loadRandomQuestion();
             } else {
@@ -2152,8 +1916,209 @@
         }
 
         // ==============================================
-        // UI UPDATES
+        // PAYMENT FUNCTIONS
         // ==============================================
+
+        function validatePhoneNumber() {
+            const phoneInput = document.getElementById('phoneNumber');
+            let phone = phoneInput.value.replace(/\D/g, '');
+            
+            if (phone.startsWith('0') && phone.length <= 10) {
+                phoneInput.value = phone;
+            } else if (phone.startsWith('254') && phone.length === 12) {
+                phone = '0' + phone.substring(3);
+                phoneInput.value = phone;
+            } else if (phone.startsWith('7') && phone.length === 9) {
+                phone = '0' + phone;
+                phoneInput.value = phone;
+            }
+            
+            gameState.phoneNumber = phoneInput.value;
+        }
+
+        async function initiatePayment() {
+            if (!gameState.isAuthenticated) {
+                showAuthModal('login');
+                return;
+            }
+            
+            if (!gameState.phoneNumber.match(/^07[0-9]{8}$/)) {
+                showPaymentStatus('error', 'Please enter a valid M-Pesa number (07XXXXXXXXX)');
+                document.getElementById('phoneNumber').focus();
+                return;
+            }
+            
+            if (gameState.paymentInProgress) {
+                showPaymentStatus('error', 'A payment is already in progress');
+                return;
+            }
+            
+            // Update user's phone
+            if (gameState.currentUser && gameState.phoneNumber !== gameState.currentUser.phone) {
+                gameState.currentUser.phone = gameState.phoneNumber;
+                saveUserData();
+            }
+            
+            showPaymentModal();
+            await processSTKPush();
+        }
+
+        async function processSTKPush() {
+            const payBtn = document.getElementById('payBtn');
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            try {
+                // Simulate payment
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                if (Math.random() > 0.2) {
+                    handleSuccessfulPayment();
+                } else {
+                    throw new Error('Payment failed. User cancelled or insufficient funds.');
+                }
+                
+            } catch (error) {
+                showPaymentStatus('error', error.message || 'Payment failed. Please try again.');
+                hidePaymentModal();
+            } finally {
+                payBtn.disabled = false;
+                updatePayButton();
+            }
+        }
+
+        function handleSuccessfulPayment(transactionId = null) {
+            gameState.points += gameState.selectedPoints;
+            
+            if (gameState.currentUser) {
+                gameState.currentUser.points = gameState.points;
+                gameState.currentUser.transactions.push({
+                    type: 'deposit',
+                    amount: gameState.selectedAmount,
+                    points: gameState.selectedPoints,
+                    transactionId: transactionId || 'DEMO_' + Date.now(),
+                    date: new Date().toISOString()
+                });
+                saveUserData();
+            }
+            
+            updatePointsDisplay();
+            updateAuthUI();
+            
+            showPaymentStatus('success', 
+                `${gameState.selectedPoints} points added to your account! ` +
+                `Transaction ID: ${transactionId || 'DEMO_' + Date.now()}`
+            );
+            
+            updatePaymentModal('success');
+            
+            setTimeout(() => {
+                hidePaymentModal();
+                showResultModal('success', 
+                    'Payment Successful!', 
+                    `You now have ${gameState.points} points. You can now play the trivia game!`
+                );
+            }, 3000);
+        }
+
+        function showPaymentModal() {
+            document.getElementById('processingAmount').textContent = 
+                `KSh ${gameState.selectedAmount}`;
+            document.getElementById('processingPhone').textContent = 
+                gameState.phoneNumber;
+            
+            document.getElementById('paymentModal').style.display = 'flex';
+            startPaymentTimer();
+        }
+
+        function hidePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            
+            if (gameState.paymentTimeout) {
+                clearTimeout(gameState.paymentTimeout);
+            }
+            gameState.paymentInProgress = false;
+        }
+
+        function startPaymentTimer() {
+            let seconds = 60;
+            const timerElement = document.getElementById('paymentTimer');
+            const secondsElement = document.getElementById('timerSeconds');
+            
+            gameState.paymentInProgress = true;
+            
+            const timer = setInterval(() => {
+                seconds--;
+                timerElement.textContent = seconds;
+                secondsElement.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    paymentTimeout();
+                }
+            }, 1000);
+            
+            gameState.paymentTimeout = setTimeout(() => {
+                clearInterval(timer);
+                paymentTimeout();
+            }, 60000);
+        }
+
+        function paymentTimeout() {
+            gameState.paymentInProgress = false;
+            showPaymentStatus('error', 'Payment timeout. Please try again.');
+            hidePaymentModal();
+        }
+
+        function cancelPayment() {
+            if (gameState.paymentTimeout) {
+                clearTimeout(gameState.paymentTimeout);
+            }
+            gameState.paymentInProgress = false;
+            hidePaymentModal();
+            showPaymentStatus('info', 'Payment cancelled');
+        }
+
+        function checkPaymentStatus() {
+            showPaymentStatus('info', 'Checking payment status...');
+            
+            setTimeout(() => {
+                if (Math.random() > 0.5) {
+                    handleSuccessfulPayment();
+                } else {
+                    showPaymentStatus('info', 'Payment still pending. Check your phone.');
+                }
+            }, 1000);
+        }
+
+        function updatePaymentModal(status) {
+            const steps = document.querySelectorAll('#paymentModal .modal-content > div > div > div');
+            if (status === 'success') {
+                steps[2].style.background = 'var(--success)';
+                steps[2].style.color = 'white';
+            }
+        }
+
+        function showPaymentStatus(type, message) {
+            const statusElement = document.getElementById('paymentStatus');
+            statusElement.className = `payment-status ${type}`;
+            statusElement.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            statusElement.style.display = 'block';
+            
+            if (type !== 'success') {
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // ==============================================
+        // UTILITY FUNCTIONS
+        // ==============================================
+
         function updateUI() {
             updatePointsDisplay();
             updateStats();
@@ -2178,11 +2143,7 @@
             document.getElementById('totalWon').textContent = totalWon.toLocaleString();
         }
 
-        // ==============================================
-        // MODAL FUNCTIONS
-        // ==============================================
         function showResultModal(type, title, message) {
-            console.log('Showing result modal:', type, title);
             const modal = document.getElementById('resultModal');
             const icon = document.getElementById('resultIcon');
             const titleElement = document.getElementById('resultTitle');
@@ -2208,9 +2169,6 @@
             document.getElementById('resultModal').style.display = 'none';
         }
 
-        // ==============================================
-        // UTILITY FUNCTIONS
-        // ==============================================
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -2219,33 +2177,7 @@
             return array;
         }
 
-        function handleKeyboardShortcuts(e) {
-            // Number keys 1-4 for answer selection
-            if (gameState.isPlaying && e.key >= '1' && e.key <= '4') {
-                const index = parseInt(e.key) - 1;
-                const options = document.querySelectorAll('.option-btn');
-                if (options[index]) {
-                    options[index].click();
-                }
-            }
-            
-            // Enter key to submit
-            if (e.key === 'Enter' && gameState.isPlaying) {
-                document.getElementById('submitBtn').click();
-            }
-            
-            // Space bar to play
-            if (e.key === ' ' && !gameState.isPlaying && gameState.points >= 100) {
-                document.getElementById('playBtn').click();
-            }
-        }
-
-        // ==============================================
-        // CASH OUT FUNCTIONALITY
-        // ==============================================
         function cashOutPoints() {
-            console.log('Cash out requested');
-            
             if (!gameState.isAuthenticated) {
                 showAuthModal('login');
                 return;
@@ -2257,9 +2189,8 @@
                 return;
             }
             
-            const cashAmount = Math.floor(gameState.points / 100); // 1 point = 1 KSh
+            const cashAmount = Math.floor(gameState.points / 100);
             
-            // Add transaction to history
             if (gameState.currentUser) {
                 gameState.currentUser.transactions.push({
                     type: 'cashout',
@@ -2274,7 +2205,6 @@
                 `Request sent to cash out ${gameState.points} points (KSh ${cashAmount}). ` +
                 `Funds will be sent to your M-Pesa within 24 hours.`);
             
-            // Reset points after cash out
             gameState.points = 0;
             if (gameState.currentUser) {
                 gameState.currentUser.points = 0;
@@ -2283,11 +2213,27 @@
             
             updatePointsDisplay();
             updateAuthUI();
-            updatePlayButton();
-            
-            // Hide profile modal
             hideProfileModal();
         }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (gameState.isPlaying && e.key >= '1' && e.key <= '4') {
+                const index = parseInt(e.key) - 1;
+                const options = document.querySelectorAll('.option-btn');
+                if (options[index]) {
+                    options[index].click();
+                }
+            }
+            
+            if (e.key === 'Enter' && gameState.isPlaying) {
+                document.getElementById('submitBtn').click();
+            }
+            
+            if (e.key === ' ' && !gameState.isPlaying && gameState.points >= 100) {
+                document.getElementById('playBtn').click();
+            }
+        });
 
     </script>
 </body>
